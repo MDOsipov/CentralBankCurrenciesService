@@ -19,7 +19,7 @@ namespace Entities.Pagination
 			TotalCount = count;
 			PageSize = pageSize;
 			CurrentPage = pageNumber;
-			TotalPages = (int)Math.Ceiling(count / (double)pageSize);
+			TotalPages = pageSize != 0 ? (int)Math.Ceiling(count / (double)pageSize) : 0;
 			AddRange(items);
 		}
 		public static PagedList<T> ToPagedList(List<T> source, int pageNumber, int pageSize)

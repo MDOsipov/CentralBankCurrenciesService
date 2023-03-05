@@ -38,6 +38,12 @@ namespace CBCurrenciesService.Controllers
 				return BadRequest("SingleCurrencyDataParameters object is null");
 			}
 
+			if (singleCurrencyDataParameters.PageNumber < 1 || singleCurrencyDataParameters.PageSize < 0)
+			{
+				_logger.LogError("Pagination parameters sent from client are not valid");
+				return BadRequest("Pagination parameters are not valid");
+			}
+
 			if (!ModelState.IsValid)
 			{
 				_logger.LogError("SingleCurrencyDataParameters object sent from client is invalid");
