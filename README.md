@@ -3,7 +3,7 @@
 ## Краткое описание:
 
 - Сервис реализован на ASP.NET CORE Web API
-- Приложение через HttpClient работает с [API ЦБ РФ](https://www.cbr-xml-daily.ru/daily_json.js)
+- Приложение извлекает данные из [API ЦБ РФ](https://www.cbr-xml-daily.ru/daily_json.js) с помощью встроенного HttpClient
 - Репозиторий содержит несколько проектов:
 > - CBCurrenciesService - Web API приложение 
 > - Contracts - библиотека классов, содержащая необходимые интерфейсы
