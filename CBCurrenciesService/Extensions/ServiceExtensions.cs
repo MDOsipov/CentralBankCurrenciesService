@@ -2,6 +2,7 @@
 using Contracts;
 using HttpService;
 using LoggerService;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CBCurrenciesService.Extensions
@@ -30,7 +31,8 @@ namespace CBCurrenciesService.Extensions
 		public static void ConfigureHttpService(this IServiceCollection services, IConfiguration config)
 		{
 			string httpString = config.GetSection("ConnectionStrings")["CbrCurrenciesHttpConnectionString"];
-			services.AddSingleton<IHttpCbrService>(s => new HttpCbrService(httpString));
+			var memoryCache = new MemoryCache(new MemoryCacheOptions());
+			services.AddSingleton<IHttpCbrService>(s => new HttpCbrService(httpString, memoryCache));
 		}
 
 		public static void ConfigureLoggerService(this IServiceCollection services)

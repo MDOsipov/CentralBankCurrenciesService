@@ -13,7 +13,7 @@ builder.Services.ConfigureHttpService(builder.Configuration);
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.ConfigureLoggerService();
 builder.Services.ConfigureMappingHelper();
-
+builder.Services.AddMemoryCache();
 builder.Services.AddControllers().AddNewtonsoftJson(options => {
 	options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
 });

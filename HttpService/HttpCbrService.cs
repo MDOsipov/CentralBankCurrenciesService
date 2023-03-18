@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace HttpService
 {
@@ -15,15 +16,18 @@ namespace HttpService
 	{
 		private readonly HttpClient _httpClient = new HttpClient();
 		private readonly JsonSerializerOptions _options;
-		private DailyCurrencyData _currentData;
-		private DateTime _lastUpdate;
+        private readonly IMemoryCache _cache;
+
+		// private DailyCurrencyData _currentData;
+		private DateTime _lastUpdate = DateTime.MinValue;
 		public DateTime LastUpdate => _lastUpdate;
 		
-		public HttpCbrService(string httpBaseUri)
+		public HttpCbrService(string httpBaseUri, IMemoryCache memoryCache)
 		{
 			_httpClient.BaseAddress = new Uri(httpBaseUri);
 			_httpClient.Timeout = new TimeSpan(0, 0, 30);
 			_options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+			_cache = memoryCache;	
 		}
 
 		public async Task<PagedList<SingleCurrencyData>> GetCurrencies(SingleCurrencyDataParameters singleCurrencyDataParameters)
@@ -58,19 +62,50 @@ namespace HttpService
 
 		private async Task<DailyCurrencyData> GetCbrInfo()
 		{
-			if (_currentData is null || ShouldUpdate())
+			DailyCurrencyData? dailyCurrencyData = null;	
+
+			if (!_cache.TryGetValue("SBRInfo", out dailyCurrencyData))
 			{
 				var response = await _httpClient.GetAsync("");
 				response.EnsureSuccessStatusCode();
 
 				var content = await response.Content.ReadAsStringAsync();
 
-				_currentData = JsonSerializer.Deserialize<DailyCurrencyData>(content, _options);
-				_lastUpdate = _currentData.Date;
-			}
+				dailyCurrencyData = JsonSerializer.Deserialize<DailyCurrencyData>(content, _options);
 
-			return _currentData;
-		}
+				if (dailyCurrencyData != null)
+				{
+					_cache.Set("SBRInfo", dailyCurrencyData);
+					_lastUpdate = DateTime.Now;
+					return dailyCurrencyData;
+                }
+
+				throw new Exception("No data");
+			}
+			else if (ShouldUpdate() && _cache.TryGetValue("SBRInfo", out dailyCurrencyData))
+			{
+				_cache.Remove("SBRInfo");
+
+                var response = await _httpClient.GetAsync("");
+                response.EnsureSuccessStatusCode();
+
+                var content = await response.Content.ReadAsStringAsync();
+
+                dailyCurrencyData = JsonSerializer.Deserialize<DailyCurrencyData>(content, _options);
+
+                if (dailyCurrencyData != null)
+                {
+                    _cache.Set("SBRInfo", dailyCurrencyData);
+                    _lastUpdate = DateTime.Now;
+                    return dailyCurrencyData;
+                }
+
+                throw new Exception("No data");
+            }
+
+            dailyCurrencyData = _cache.Get("SBRInfo") as DailyCurrencyData;
+			return dailyCurrencyData;
+        }
 
 		private bool ShouldUpdate()
 		{
