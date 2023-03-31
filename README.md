@@ -5,6 +5,7 @@
 - Сервис реализован на ASP.NET CORE Web API
 - Приложение извлекает данные из [API ЦБ РФ](https://www.cbr-xml-daily.ru/daily_json.js) с помощью встроенного HttpClient
 - Для повышения производительности приложения реализовано кэширование данных с помощью MemoryCache
+- Приложение развернуто с помощью Microsoft Azure: [ссылка на работающий сервис](https://cbcurrenciesservice.azurewebsites.net/swagger/index.html)
 - Репозиторий содержит несколько проектов:
 > - CBCurrenciesService - Web API приложение 
 > - Contracts - библиотека классов, содержащая необходимые интерфейсы
