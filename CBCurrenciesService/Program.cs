@@ -14,6 +14,13 @@ builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.ConfigureLoggerService();
 builder.Services.ConfigureMappingHelper();
 builder.Services.AddMemoryCache();
+builder.Services.AddCors(policy =>
+{
+	policy.AddPolicy("CorsPolicy", opt => opt
+		.AllowAnyOrigin()
+		.AllowAnyHeader()
+		.AllowAnyMethod());
+});
 builder.Services.AddControllers().AddNewtonsoftJson(options => {
 	options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
 });
@@ -25,13 +32,12 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-	app.UseSwagger();
-	app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
+
+app.UseCors("CorsPolicy");
 
 app.UseAuthorization();
 
