@@ -127,7 +127,7 @@ namespace HttpService
 			return true;
 		}
 
-		private void SearchByName(ref List<SingleCurrencyData> currencies, string name)
+		private void SearchByName(ref List<SingleCurrencyData> currencies, string? name)
 		{
 			if (!currencies.Any() || string.IsNullOrEmpty(name))
 				return;
