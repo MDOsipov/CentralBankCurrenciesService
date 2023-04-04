@@ -34,7 +34,7 @@ namespace CBCurrenciesService.Extensions
 		{
 			string httpString = config.GetSection("ConnectionStrings")["CbrCurrenciesHttpConnectionString"];
 			var memoryCache = new MemoryCache(new MemoryCacheOptions());
-			services.AddSingleton<IHttpCbrService>(s => new HttpCbrService(httpString, memoryCache, new SortHelper<SingleCurrencyData>()));
+			services.AddSingleton<IHttpCbrService>(s => new HttpCbrService(httpString, memoryCache));
 		}
 
 		public static void ConfigureLoggerService(this IServiceCollection services)

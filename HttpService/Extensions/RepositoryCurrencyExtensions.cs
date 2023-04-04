@@ -7,11 +7,19 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Linq.Dynamic.Core;
 
-namespace Entities.Helpers
+namespace HttpService.Extensions
 {
-	public class SortHelper<T> : ISortHelper<T>
+	public static class RepositoryCurrencyExtensions
 	{
-		public IQueryable<T> ApplySort(IQueryable<T> entities, string? orderByQueryString)
+		public static IQueryable<SingleCurrencyData> SearchByName(this IQueryable<SingleCurrencyData> currencies, string? name)
+		{
+			if (!currencies.Any() || string.IsNullOrEmpty(name))
+				return currencies;
+
+			return currencies.Where(c => c.Name.ToLower().Contains(name.Trim().ToLower()));
+		}
+
+		public static IQueryable<SingleCurrencyData> ApplySort(this IQueryable<SingleCurrencyData> entities, string? orderByQueryString)
 		{
 			if (!entities.Any())
 				return entities;
@@ -53,3 +61,4 @@ namespace Entities.Helpers
 		}
 	}
 }
+
