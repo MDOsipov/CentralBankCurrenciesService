@@ -1,6 +1,5 @@
 ﻿using CBCurrenciesService.Mapping;
 using Contracts;
-using Entities.Helpers;
 using Entities.Models;
 using HttpService;
 using LoggerService;
