@@ -34,11 +34,13 @@ namespace HttpService
 		{
 			DailyCurrencyData dailyCurrencyData = await GetCbrInfo();
 
-			var currencies = PagedList<SingleCurrencyData>.ToPagedList(dailyCurrencyData.Valute.Values.ToList(),
-								singleCurrencyDataParameters.PageNumber,
-								singleCurrencyDataParameters.PageSize);
+			var currencies = dailyCurrencyData.Valute.Values.Where(c => c.Value >= singleCurrencyDataParameters.MinValue && c.Value <= singleCurrencyDataParameters.MaxValue).ToList();
 
-			return currencies;
+			SearchByName(ref currencies, singleCurrencyDataParameters.Name);
+
+			return PagedList<SingleCurrencyData>.ToPagedList(currencies,
+								singleCurrencyDataParameters.PageNumber,
+								singleCurrencyDataParameters.PageSize); ;
 		}
 
 		public async Task<SingleCurrencyData> GetCurrencyById (string currencyId)
@@ -123,6 +125,14 @@ namespace HttpService
 			}
 
 			return true;
+		}
+
+		private void SearchByName(ref List<SingleCurrencyData> currencies, string name)
+		{
+			if (!currencies.Any() || string.IsNullOrEmpty(name))
+				return;
+
+			currencies = currencies.Where(c => c.Name.ToLower().Contains(name.Trim().ToLower())).ToList();	
 		}
 	}
 }

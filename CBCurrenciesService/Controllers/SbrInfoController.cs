@@ -32,6 +32,9 @@ namespace CBCurrenciesService.Controllers
 		{
 			_logger.LogDebug($"GetCurrencies method started");
 
+			if (!singleCurrencyDataParameters.ValidValueRange)
+				return BadRequest("Max value can not be less than min value");
+
 			if (singleCurrencyDataParameters is null)
 			{
 				_logger.LogError("SingleCurrencyDataParameters object sent from client is null");
