@@ -1,5 +1,7 @@
 ﻿using CBCurrenciesService.Mapping;
 using Contracts;
+using Entities.Helpers;
+using Entities.Models;
 using HttpService;
 using LoggerService;
 using Microsoft.Extensions.Caching.Memory;
@@ -32,7 +34,7 @@ namespace CBCurrenciesService.Extensions
 		{
 			string httpString = config.GetSection("ConnectionStrings")["CbrCurrenciesHttpConnectionString"];
 			var memoryCache = new MemoryCache(new MemoryCacheOptions());
-			services.AddSingleton<IHttpCbrService>(s => new HttpCbrService(httpString, memoryCache));
+			services.AddSingleton<IHttpCbrService>(s => new HttpCbrService(httpString, memoryCache, new SortHelper<SingleCurrencyData>()));
 		}
 
 		public static void ConfigureLoggerService(this IServiceCollection services)

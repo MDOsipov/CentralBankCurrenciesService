@@ -9,6 +9,9 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
+using System.Reflection;
+using System.Linq.Dynamic.Core;
+using Entities.Helpers;
 
 namespace HttpService
 {
@@ -17,28 +20,31 @@ namespace HttpService
 		private readonly HttpClient _httpClient = new HttpClient();
 		private readonly JsonSerializerOptions _options;
         private readonly IMemoryCache _cache;
+		private readonly ISortHelper<SingleCurrencyData> _sortHelper;
 
 		// private DailyCurrencyData _currentData;
 		private DateTime _lastUpdate = DateTime.MinValue;
 		public DateTime LastUpdate => _lastUpdate;
 		
-		public HttpCbrService(string httpBaseUri, IMemoryCache memoryCache)
+		public HttpCbrService(string httpBaseUri, IMemoryCache memoryCache, ISortHelper<SingleCurrencyData> sortHelper)
 		{
 			_httpClient.BaseAddress = new Uri(httpBaseUri);
 			_httpClient.Timeout = new TimeSpan(0, 0, 30);
 			_options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-			_cache = memoryCache;	
+			_cache = memoryCache;
+			_sortHelper = sortHelper;
 		}
 
 		public async Task<PagedList<SingleCurrencyData>> GetCurrencies(SingleCurrencyDataParameters singleCurrencyDataParameters)
 		{
 			DailyCurrencyData dailyCurrencyData = await GetCbrInfo();
 
-			var currencies = dailyCurrencyData.Valute.Values.Where(c => c.Value >= singleCurrencyDataParameters.MinValue && c.Value <= singleCurrencyDataParameters.MaxValue).ToList();
+			var currencies = dailyCurrencyData.Valute.Values.Where(c => c.Value >= singleCurrencyDataParameters.MinValue && c.Value <= singleCurrencyDataParameters.MaxValue).AsQueryable();
 
 			SearchByName(ref currencies, singleCurrencyDataParameters.Name);
+			currencies = _sortHelper.ApplySort(currencies, singleCurrencyDataParameters.OrderBy);
 
-			return PagedList<SingleCurrencyData>.ToPagedList(currencies,
+			return PagedList<SingleCurrencyData>.ToPagedList(currencies.ToList(),
 								singleCurrencyDataParameters.PageNumber,
 								singleCurrencyDataParameters.PageSize); ;
 		}
@@ -127,12 +133,13 @@ namespace HttpService
 			return true;
 		}
 
-		private void SearchByName(ref List<SingleCurrencyData> currencies, string? name)
+		private void SearchByName(ref IQueryable<SingleCurrencyData> currencies, string? name)
 		{
 			if (!currencies.Any() || string.IsNullOrEmpty(name))
 				return;
 
-			currencies = currencies.Where(c => c.Name.ToLower().Contains(name.Trim().ToLower())).ToList();	
+			currencies = currencies.Where(c => c.Name.ToLower().Contains(name.Trim().ToLower()));	
 		}
+
 	}
 }
