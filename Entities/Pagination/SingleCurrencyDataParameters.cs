@@ -17,6 +17,7 @@ namespace Entities.Pagination
         public bool ValidValueRange => MinValue <= MaxValue;    
         public string? Name { get; set; }
         public string? OrderBy { get; set; } 
+        public string? Fields { get; set; }
 
         public int PageSize
         {

@@ -80,6 +80,59 @@ namespace CBCurrenciesService.Controllers
 			}
 		}
 
+		[HttpGet("currenciesShaped")]
+		public async Task<IActionResult> GetCurrenciesShaped([FromQuery] SingleCurrencyDataParameters singleCurrencyDataParameters)
+		{
+			_logger.LogDebug($"GetCurrencies method started");
+
+			if (!singleCurrencyDataParameters.ValidValueRange)
+				return BadRequest("Max value can not be less than min value");
+
+			if (singleCurrencyDataParameters is null)
+			{
+				_logger.LogError("SingleCurrencyDataParameters object sent from client is null");
+				return BadRequest("SingleCurrencyDataParameters object is null");
+			}
+
+			if (singleCurrencyDataParameters.PageNumber < 1 || singleCurrencyDataParameters.PageSize < 0)
+			{
+				_logger.LogError("Pagination parameters sent from client are not valid");
+				return BadRequest("Pagination parameters are not valid");
+			}
+
+			if (!ModelState.IsValid)
+			{
+				_logger.LogError("SingleCurrencyDataParameters object sent from client is invalid");
+				return BadRequest("SingleCurrencyDataParameters object is invalid");
+			}
+
+			try
+			{
+				var currenciesShaped = await _httpCbrService.GetCurrenciesShaped(singleCurrencyDataParameters);
+
+				Metadata metadata = _mappingHelper.GetMetaData(currenciesShaped);
+
+				Response?.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+				_logger.LogInfo($"Success. Currencies are received");
+
+				// var currenciesMapped = _mapper.Map<IEnumerable<SingleCurrencyDto>>(currenciesShaped);
+
+				_mappingHelper.SetReportDate(currenciesShaped);
+
+				return Ok(currenciesShaped);
+			}
+			catch (HttpRequestException ex)
+			{
+				_logger.LogError($"Http request exception. Something went wrong while requesting Central Bank API");
+				return StatusCode((int)ex.StatusCode, ex.Message);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError($"Internal server error. Something went wrong inside GetCurrencies action: {ex.Message}");
+				return StatusCode(500, ex.Message);
+			}
+		}
+
 		[HttpGet("currency/{currencyId}")]
 		public async Task<IActionResult> GetCurrency(string currencyId)
 		{
@@ -105,6 +158,44 @@ namespace CBCurrenciesService.Controllers
 
 				_logger.LogInfo("Success. Currency is received");
 				return Ok(currencyMapped);
+			}
+			catch (HttpRequestException ex)
+			{
+				_logger.LogError($"Http request exception. Something went wrong while requesting Central Bank API");
+				return StatusCode((int)ex.StatusCode, ex.Message);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError($"Internal server error. Something went wrong inside GetCurrency action: {ex.Message}");
+				return StatusCode(500, ex.Message);
+			}
+		}
+
+		[HttpGet("currencyShaped/{currencyId}")]
+		public async Task<IActionResult> GetCurrencyShaped(string currencyId, [FromQuery] string? fields)
+		{
+			_logger.LogDebug($"GetCurrency method started with parameter currencyId: {currencyId}");
+
+			if (string.IsNullOrEmpty(currencyId))
+			{
+				_logger.LogError($"Bad request. Argument currencyId is invalid: {currencyId}");
+				return BadRequest();
+			}
+
+			if (!await _httpCbrService.CurrencyExists(currencyId))
+			{
+				_logger.LogError($"Not found. Currency with id of {currencyId} hasn't been found");
+				return NotFound();
+			}
+
+			try
+			{
+				var currency = await _httpCbrService.GetCurrencyByIdShaped(currencyId, fields);
+				
+				_mappingHelper.SetReportDate(currency);
+
+				_logger.LogInfo("Success. Currency is received");
+				return Ok(currency);
 			}
 			catch (HttpRequestException ex)
 			{

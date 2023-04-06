@@ -6,11 +6,13 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Linq.Dynamic.Core;
+using HttpService.Helpers;
 
 namespace HttpService.Extensions
 {
 	public static class RepositoryCurrencyExtensions
 	{
+		public static DataHelper<SingleCurrencyData> dataHelper = new DataHelper<SingleCurrencyData>();	
 		public static IQueryable<SingleCurrencyData> SearchByName(this IQueryable<SingleCurrencyData> currencies, string? name)
 		{
 			if (!currencies.Any() || string.IsNullOrEmpty(name))
@@ -59,6 +61,7 @@ namespace HttpService.Extensions
 
 			return entities.OrderBy(orderQuery);
 		}
+		
 	}
 }
 

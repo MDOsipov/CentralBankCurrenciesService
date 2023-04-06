@@ -12,6 +12,7 @@ using Microsoft.Extensions.Caching.Memory;
 using System.Reflection;
 using System.Linq.Dynamic.Core;
 using HttpService.Extensions;
+using System.Dynamic;
 
 namespace HttpService
 {
@@ -20,17 +21,19 @@ namespace HttpService
 		private readonly HttpClient _httpClient = new HttpClient();
 		private readonly JsonSerializerOptions _options;
         private readonly IMemoryCache _cache;
+		private readonly IDataHelper<SingleCurrencyData> _dataHelper;
 
 		// private DailyCurrencyData _currentData;
 		private DateTime _lastUpdate = DateTime.MinValue;
 		public DateTime LastUpdate => _lastUpdate;
 		
-		public HttpCbrService(string httpBaseUri, IMemoryCache memoryCache)
+		public HttpCbrService(string httpBaseUri, IMemoryCache memoryCache, IDataHelper<SingleCurrencyData> dataHelper)
 		{
 			_httpClient.BaseAddress = new Uri(httpBaseUri);
 			_httpClient.Timeout = new TimeSpan(0, 0, 30);
 			_options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 			_cache = memoryCache;
+			_dataHelper = dataHelper;
 		}
 
 		public async Task<PagedList<SingleCurrencyData>> GetCurrencies(SingleCurrencyDataParameters singleCurrencyDataParameters)
@@ -48,6 +51,23 @@ namespace HttpService
 								singleCurrencyDataParameters.PageSize); ;
 		}
 
+		public async Task<PagedList<ExpandoObject>> GetCurrenciesShaped(SingleCurrencyDataParameters singleCurrencyDataParameters)
+		{
+			DailyCurrencyData dailyCurrencyData = await GetCbrInfo();
+
+			var currencies = dailyCurrencyData.Valute.Values.Where(c => c.Value >= singleCurrencyDataParameters.MinValue && c.Value <= singleCurrencyDataParameters.MaxValue)
+								.AsQueryable()
+								.SearchByName(singleCurrencyDataParameters.Name)
+								.ApplySort(singleCurrencyDataParameters.OrderBy)
+								.ToList();
+
+			var shapedObjects = _dataHelper.ShapeData(currencies, singleCurrencyDataParameters.Fields).ToList();
+
+			return PagedList<ExpandoObject>.ToPagedList(shapedObjects,
+								singleCurrencyDataParameters.PageNumber,
+								singleCurrencyDataParameters.PageSize); ;
+		}
+
 		public async Task<SingleCurrencyData> GetCurrencyById (string currencyId)
 		{
 			DailyCurrencyData dailyCurrencyData = await GetCbrInfo();
@@ -56,6 +76,16 @@ namespace HttpService
 
 
 			return currency;
+		}
+
+		public async Task<ExpandoObject> GetCurrencyByIdShaped (string currencyId, string? fields)
+		{
+			DailyCurrencyData dailyCurrencyData = await GetCbrInfo();
+
+			var currency = dailyCurrencyData.Valute.Values.Where(c => c.ID.Equals(currencyId)).SingleOrDefault();
+			var currencyShaped = _dataHelper.ShapeData(currency, fields);
+
+			return currencyShaped;
 		}
 
 		public async Task<bool> CurrencyExists(string currencyId)
